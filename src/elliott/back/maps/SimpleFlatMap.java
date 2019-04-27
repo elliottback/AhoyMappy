@@ -109,6 +109,23 @@ public class SimpleFlatMap <K,V> implements Map<K,V> {
 
     @Override
     public V remove(Object key) {
+        Tuple keyTuple = new Tuple(key, null);
+
+        for( int idx = startIndexFromObject(key); idx < this.backing.length; idx++ )
+        {
+            // if we hit a null we did not find the item
+            if( this.backing[idx] == null )
+                return null;
+
+            // if we hit a matching key, we found it
+            if( this.backing[idx].equals(keyTuple)) {
+                V value = this.backing[idx].getValue();
+                this.backing[idx] = null;
+                return value;
+            }
+        }
+
+        // ran out of space
         return null;
     }
 
