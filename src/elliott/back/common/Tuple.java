@@ -1,4 +1,4 @@
-package common;
+package elliott.back.common;
 
 import java.util.Map;
 import java.util.Objects;

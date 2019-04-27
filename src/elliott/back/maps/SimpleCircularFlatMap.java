@@ -1,7 +1,7 @@
 package elliott.back.maps;
 
-import common.AbstractMapCommonMethods;
-import common.Tuple;
+import elliott.back.common.AbstractMapCommonMethods;
+import elliott.back.common.Tuple;
 
 import java.util.Arrays;
 import java.util.Map;
