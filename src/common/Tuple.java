@@ -1,11 +1,12 @@
 package common;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
  * Tuple class for storing key,value pairs
  */
-public class Tuple <K,V> {
+public class Tuple <K,V> implements Map.Entry<K, V> {
     private K key;
     private V value;
 
@@ -26,8 +27,9 @@ public class Tuple <K,V> {
         return value;
     }
 
-    public void setValue(V value) {
+    public V setValue(V value) {
         this.value = value;
+        return this.value;
     }
 
     /**
