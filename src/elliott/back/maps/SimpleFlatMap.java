@@ -43,7 +43,7 @@ public class SimpleFlatMap <K,V> implements Map<K,V> {
      */
     private int startIndexFromObject(Object key )
     {
-        return key.hashCode() % this.backing.length;
+        return key == null ? 0 : key.hashCode() % this.backing.length;
     }
 
     @Override
@@ -106,27 +106,31 @@ public class SimpleFlatMap <K,V> implements Map<K,V> {
         Tuple<K,V> [] oldBacking = this.backing;
         this.backing = new Tuple[this.backing.length * 2 ];
         for(Tuple<K,V> oldEntry : oldBacking)
-            put(oldEntry.getKey(), oldEntry.getValue());
+            if(oldEntry != null)
+                put(oldEntry.getKey(), oldEntry.getValue());
     }
 
     @Override
     public V put(K key, V value) {
-        // ran out of space, we need to resize!
-        if(this.backing.length == this.currentSize)
-            reHash();
-
         // there should be some space, use it
         for( int idx = startIndexFromObject(key); idx < this.backing.length; idx++ )
         {
-            // if we hit a null we found a good spot to stick it
+            // if we hit a null there is nothing there
             if( this.backing[idx] == null ) {
                 this.backing[idx] = new Tuple(key, value);
                 this.currentSize++;
-                return value;
+                return null;
+            } // the key itself is equal, replace
+            else if( ( this.backing[idx].getKey() == null && key == null ) || this.backing[idx].getKey().equals(key) ) {
+                V oldValue = this.backing[idx].getValue();
+                this.backing[idx] = new Tuple(key, value);
+                return oldValue;
             }
         }
 
-        throw new IllegalStateException("Could not find a place to this element, event though there should be one");
+        // ran out of space, we need to resize!
+        reHash();
+        return this.put(key, value);
     }
 
     @Override
