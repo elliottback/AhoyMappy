@@ -102,9 +102,34 @@ public class SimpleFlatMap <K,V> implements Map<K,V> {
         return null;
     }
 
+    /**
+     * The rehash operation will just double the array
+     */
+    private void reHash(){
+        Tuple<K,V> [] oldBacking = this.backing;
+        this.backing = new Tuple[this.backing.length * 2 ];
+        for(Tuple<K,V> oldEntry : oldBacking)
+            put(oldEntry.getKey(), oldEntry.getValue());
+    }
+
     @Override
     public V put(K key, V value) {
-        return null;
+        // ran out of space, we need to resize!
+        if(this.backing.length == this.currentSize)
+            reHash();
+
+        // there should be some space, use it
+        for( int idx = startIndexFromObject(key); idx < this.backing.length; idx++ )
+        {
+            // if we hit a null we found a good spot to stick it
+            if( this.backing[idx] == null ) {
+                this.backing[idx] = new Tuple(key, value);
+                this.currentSize++;
+                return value;
+            }
+        }
+
+        throw new IllegalStateException("Could not find a place to this element, event though there should be one");
     }
 
     @Override
@@ -121,6 +146,7 @@ public class SimpleFlatMap <K,V> implements Map<K,V> {
             if( this.backing[idx].equals(keyTuple)) {
                 V value = this.backing[idx].getValue();
                 this.backing[idx] = null;
+                this.currentSize--;
                 return value;
             }
         }
@@ -138,6 +164,7 @@ public class SimpleFlatMap <K,V> implements Map<K,V> {
     @Override
     public void clear() {
         Arrays.fill(this.backing, null);
+        this.currentSize = 0;
     }
 
     @Override
