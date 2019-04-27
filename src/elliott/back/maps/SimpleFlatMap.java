@@ -104,7 +104,10 @@ public class SimpleFlatMap <K,V> implements Map<K,V> {
      */
     private void reHash(){
         Tuple<K,V> [] oldBacking = this.backing;
+
         this.backing = new Tuple[this.backing.length * 2 ];
+        this.currentSize = 0;
+
         for(Tuple<K,V> oldEntry : oldBacking)
             if(oldEntry != null)
                 put(oldEntry.getKey(), oldEntry.getValue());
@@ -129,6 +132,8 @@ public class SimpleFlatMap <K,V> implements Map<K,V> {
         }
 
         // ran out of space, we need to resize!
+        // this resize technique means an adversary could simply pick keys that fall to the end our
+        // array, causing us to double it each time.  Maybe less-simple flat map can avoid that
         reHash();
         return this.put(key, value);
     }

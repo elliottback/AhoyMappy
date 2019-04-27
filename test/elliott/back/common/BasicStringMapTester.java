@@ -56,5 +56,14 @@ public abstract  class BasicStringMapTester {
     public void test127Entries(){
         for(int i = 0; i < 127; i++)
             mapToSanityCheck.put(""+i, "v: " + i);
+
+        assertEquals(127, mapToSanityCheck.size());
+
+        // verify the entries
+        for(int i = 0; i < 127; i++)
+            assertEquals( "v: " + i, mapToSanityCheck.get(""+i) );
+
+        mapToSanityCheck.clear();
+        assertEquals(0, mapToSanityCheck.size());
     }
 }
