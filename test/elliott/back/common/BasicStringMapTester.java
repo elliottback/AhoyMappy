@@ -66,4 +66,36 @@ public abstract  class BasicStringMapTester {
         mapToSanityCheck.clear();
         assertEquals(0, mapToSanityCheck.size());
     }
+
+    @Test
+    @DisplayName("duplicate string keys")
+    public void testDupeStringKeys() {
+        mapToSanityCheck.put("abc", "abc");
+        String value = mapToSanityCheck.put("abc", "def");
+        assertEquals("abc", value);
+        assertEquals( "def", mapToSanityCheck.get("abc") );
+        assertEquals(1, mapToSanityCheck.size());
+
+        value = mapToSanityCheck.remove( "abc" );
+        assertEquals("def", value);
+        assertEquals(0, mapToSanityCheck.size());
+    }
+
+    @Test
+    @DisplayName("missing key")
+    public void testMissingKey() {
+        assertEquals( null, mapToSanityCheck.get("abc") );
+        assertEquals( false, mapToSanityCheck.containsKey("abc") );
+        assertEquals( false, mapToSanityCheck.containsValue("def") );
+
+        String value = mapToSanityCheck.put("abc", "def");
+        assertEquals(null, value);
+
+        assertEquals( "def", mapToSanityCheck.get("abc") );
+        assertEquals( true, mapToSanityCheck.containsKey("abc") );
+        assertEquals( true, mapToSanityCheck.containsValue("def") );
+
+        mapToSanityCheck.clear();
+        assertEquals(0, mapToSanityCheck.size());
+    }
 }
