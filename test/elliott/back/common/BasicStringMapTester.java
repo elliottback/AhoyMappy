@@ -98,4 +98,20 @@ public abstract  class BasicStringMapTester {
         mapToSanityCheck.clear();
         assertEquals(0, mapToSanityCheck.size());
     }
+
+    @Test
+    @DisplayName("a million entries")
+    public void testAMillionElements(){
+        for(int i = 0; i < 1000000; i++)
+            mapToSanityCheck.put(""+i, "v: " + i);
+
+        assertEquals(1000000, mapToSanityCheck.size());
+
+        // verify the entries
+        for(int i = 0; i < 1000000; i++)
+            assertEquals( "v: " + i, mapToSanityCheck.get(""+i) );
+
+        mapToSanityCheck.clear();
+        assertEquals(0, mapToSanityCheck.size());
+    }
 }
