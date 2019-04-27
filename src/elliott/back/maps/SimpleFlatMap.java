@@ -41,18 +41,64 @@ public class SimpleFlatMap <K,V> implements Map<K,V> {
         return currentSize == 0;
     }
 
-    @Override
-    public boolean containsKey(Object key) {
-        return false;
+    /**
+     * Lookup the start index in our array from some object
+     */
+    private int startIndexFromObject(Object key )
+    {
+        return key.hashCode() % this.backing.length;
     }
 
     @Override
+    public boolean containsKey(Object key) {
+        Tuple keyTuple = new Tuple(key, null);
+
+        for( int idx = startIndexFromObject(key); idx < this.backing.length; idx++ )
+        {
+            // if we hit a null we did not find the item
+            if( this.backing[idx] == null )
+                return false;
+
+            // if we hit a matching key, we found it
+            if( this.backing[idx].equals(keyTuple))
+                return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * This will be a horrible linear scan, we have to check every single item
+     */
+    @Override
     public boolean containsValue(Object value) {
+        for( int idx = 0; idx < this.backing.length; idx++ )
+        {
+            // if we hit a null we did not find the item
+            if( this.backing[idx] != null &&
+                this.backing[idx].getValue().equals(value ) )
+                return true;
+        }
+
         return false;
     }
 
     @Override
     public V get(Object key) {
+        Tuple keyTuple = new Tuple(key, null);
+
+        for( int idx = startIndexFromObject(key); idx < this.backing.length; idx++ )
+        {
+            // if we hit a null we did not find the item
+            if( this.backing[idx] == null )
+                return null;
+
+            // if we hit a matching key, we found it
+            if( this.backing[idx].equals(keyTuple))
+                return this.backing[idx].getValue();
+        }
+
+        // ran out of space
         return null;
     }
 
