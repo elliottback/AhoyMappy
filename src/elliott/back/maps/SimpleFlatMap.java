@@ -2,10 +2,7 @@ package elliott.back.maps;
 
 import common.Tuple;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /***
  * This class is a simple map, with no concurrency protections, that is based on
@@ -169,16 +166,37 @@ public class SimpleFlatMap <K,V> implements Map<K,V> {
 
     @Override
     public Set<K> keySet() {
-        return null;
+        Set<K> keySet = new HashSet<>();
+
+        for (Tuple<K, V> aBacking : backing) {
+            if (aBacking != null)
+                keySet.add(aBacking.getKey());
+        }
+
+        return keySet;
     }
 
     @Override
     public Collection<V> values() {
-        return null;
+        Collection<V> values = new ArrayList<>();
+
+        for (Tuple<K, V> aBacking : backing) {
+            if (aBacking != null)
+                values.add(aBacking.getValue());
+        }
+
+        return values;
     }
 
     @Override
     public Set<Entry<K, V>> entrySet() {
-        return null;
+        Set<Entry<K, V>> entrySet = new HashSet<>();
+
+        for (Tuple<K, V> aBacking : backing) {
+            if (aBacking != null)
+                entrySet.add(aBacking);
+        }
+
+        return entrySet;
     }
 }
