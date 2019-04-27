@@ -11,10 +11,11 @@ import java.util.Map;
  * a flat array which is doubled every time it becomes full (on insert).
  *
  * Both inserts and lookups use probing in the array to find the next free slot.
+ * Probing wraps around the array size.
  *
  * Limited to around MAX_INT entries because arrays are int-indexed in Java.
  */
-public class SimpleFlatMap <K,V> extends AbstractMapCommonMethods<K,V> implements Map<K,V> {
+public class SimpleCircularFlatMap<K,V> extends AbstractMapCommonMethods<K,V> implements Map<K,V> {
 
     private Tuple<K,V> [] backing;
     private int currentSize = 0;
@@ -22,11 +23,11 @@ public class SimpleFlatMap <K,V> extends AbstractMapCommonMethods<K,V> implement
     /**
      * Default construct = initial 32 entries
      */
-    public SimpleFlatMap() {
+    public SimpleCircularFlatMap() {
         this(32);
     }
 
-    public SimpleFlatMap( int initialSize ) {
+    public SimpleCircularFlatMap(int initialSize ) {
         backing = new Tuple [initialSize];
     }
 
@@ -57,14 +58,18 @@ public class SimpleFlatMap <K,V> extends AbstractMapCommonMethods<K,V> implement
     public boolean containsKey(Object key) {
         Tuple keyTuple = new Tuple(key, null);
 
-        for( int idx = startIndexFromObject(key); idx < this.backing.length; idx++ )
+        int startOffset = startIndexFromObject(key);
+
+        for( int idx = 0; idx < this.backing.length; idx++ )
         {
+            int pos = ( idx + startOffset ) % this.backing.length;
+
             // if we hit a null we did not find the item
-            if( this.backing[idx] == null )
+            if( this.backing[pos] == null )
                 return false;
 
             // if we hit a matching key, we found it
-            if( this.backing[idx].equals(keyTuple))
+            if( this.backing[pos].equals(keyTuple))
                 return true;
         }
 
@@ -75,15 +80,19 @@ public class SimpleFlatMap <K,V> extends AbstractMapCommonMethods<K,V> implement
     public V get(Object key) {
         Tuple keyTuple = new Tuple(key, null);
 
-        for( int idx = startIndexFromObject(key); idx < this.backing.length; idx++ )
+        int startOffset = startIndexFromObject(key);
+
+        for( int idx = 0; idx < this.backing.length; idx++ )
         {
+            int pos = ( idx + startOffset ) % this.backing.length;
+
             // if we hit a null we did not find the item
-            if( this.backing[idx] == null )
+            if( this.backing[pos] == null )
                 return null;
 
             // if we hit a matching key, we found it
-            if( this.backing[idx].equals(keyTuple))
-                return this.backing[idx].getValue();
+            if( this.backing[pos].equals(keyTuple))
+                return this.backing[pos].getValue();
         }
 
         // ran out of space
@@ -92,6 +101,7 @@ public class SimpleFlatMap <K,V> extends AbstractMapCommonMethods<K,V> implement
 
     /**
      * The rehash operation will just double the array
+     * TODO: dupe
      */
     private void reHash(){
         Tuple<K,V> [] oldBacking = this.backing;
@@ -105,44 +115,53 @@ public class SimpleFlatMap <K,V> extends AbstractMapCommonMethods<K,V> implement
     }
 
     @Override
+    // TODO: the iteration order could be abstracted
     public V put(K key, V value) {
+        // ran out of space, we need to resize!
+        if(this.currentSize == this.backing.length)
+            reHash();
+
+        int startOffset = startIndexFromObject(key);
+
         // there should be some space, use it
-        for( int idx = startIndexFromObject(key); idx < this.backing.length; idx++ )
+        for( int idx = 0; idx < this.backing.length; idx++ )
         {
+            int pos = ( startOffset + idx ) % this.backing.length;
+
             // if we hit a null there is nothing there
-            if( this.backing[idx] == null ) {
-                this.backing[idx] = new Tuple(key, value);
+            if( this.backing[pos] == null ) {
+                this.backing[pos] = new Tuple(key, value);
                 this.currentSize++;
                 return null;
             } // the key itself is equal, replace
-            else if( ( this.backing[idx].getKey() == null && key == null ) || this.backing[idx].getKey().equals(key) ) {
-                V oldValue = this.backing[idx].getValue();
-                this.backing[idx] = new Tuple(key, value);
+            else if( ( this.backing[pos].getKey() == null && key == null ) || this.backing[pos].getKey().equals(key) ) {
+                V oldValue = this.backing[pos].getValue();
+                this.backing[pos] = new Tuple(key, value);
                 return oldValue;
             }
         }
 
-        // ran out of space, we need to resize!
-        // this resize technique means an adversary could simply pick keys that fall to the end our
-        // array, causing us to double it each time.  Maybe less-simple flat map can avoid that
-        reHash();
-        return this.put(key, value);
+        throw new IllegalStateException("Array should have a slot but doesn't");
     }
 
     @Override
     public V remove(Object key) {
         Tuple keyTuple = new Tuple(key, null);
 
-        for( int idx = startIndexFromObject(key); idx < this.backing.length; idx++ )
+        int startOffset = startIndexFromObject(key);
+
+        for( int idx = 0; idx < this.backing.length; idx++ )
         {
+            int pos = ( startOffset + idx ) % this.backing.length;
+
             // if we hit a null we did not find the item
-            if( this.backing[idx] == null )
+            if( this.backing[pos] == null )
                 return null;
 
             // if we hit a matching key, we found it
-            if( this.backing[idx].equals(keyTuple)) {
-                V value = this.backing[idx].getValue();
-                this.backing[idx] = null;
+            if( this.backing[pos].equals(keyTuple)) {
+                V value = this.backing[pos].getValue();
+                this.backing[pos] = null;
                 this.currentSize--;
                 return value;
             }
