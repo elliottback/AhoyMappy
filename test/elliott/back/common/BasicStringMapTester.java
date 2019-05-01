@@ -3,7 +3,9 @@ package elliott.back.common;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -113,5 +115,50 @@ public abstract  class BasicStringMapTester {
 
         mapToSanityCheck.clear();
         assertEquals(0, mapToSanityCheck.size());
+    }
+
+    @Test
+    @DisplayName("map protocols - keySet")
+    public void testMapContractKeySet() {
+        for(int i = 0; i < 127; i++)
+            mapToSanityCheck.put(""+i, "v: " + i);
+
+        assertEquals(127, mapToSanityCheck.size());
+
+        Set<String> keys = mapToSanityCheck.keySet();
+        for(int i = 0; i < 127; i++)
+            keys.contains(""+i);
+
+        mapToSanityCheck.clear();
+    }
+
+    @Test
+    @DisplayName("map protocols - entrySet")
+    public void testMapContractEntrySet() {
+        for(int i = 0; i < 127; i++)
+            mapToSanityCheck.put(""+i, "v: " + i);
+
+        assertEquals(127, mapToSanityCheck.size());
+
+        Set<Map.Entry<String, String>> keys = mapToSanityCheck.entrySet();
+        for(int i = 0; i < 127; i++)
+            keys.contains(new Tuple(""+i, "v: " + i));
+
+        mapToSanityCheck.clear();
+    }
+
+    @Test
+    @DisplayName("map protocols - values")
+    public void testMapContractValueSet() {
+        for(int i = 0; i < 127; i++)
+            mapToSanityCheck.put(""+i, "v: " + i);
+
+        assertEquals(127, mapToSanityCheck.size());
+
+        Collection<String> values = mapToSanityCheck.values();
+        for(int i = 0; i < 127; i++)
+            values.contains("v: " + i);
+
+        mapToSanityCheck.clear();
     }
 }
