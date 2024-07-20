@@ -5,8 +5,16 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class SimpleDateFormatConcurrencyTest {
-    private static SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
     private static final TimeZone TIME_ZONE = TimeZone.getTimeZone("Asia/Tokyo");
+
+    private static SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+
+    private static ThreadLocal<SimpleDateFormat> dateFormatThreadLocal =
+            ThreadLocal.withInitial(() -> {
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+                format.setTimeZone(TIME_ZONE);
+                return format;
+            });
 
     static {
         format.setTimeZone(TIME_ZONE);
@@ -38,7 +46,7 @@ public class SimpleDateFormatConcurrencyTest {
         return new Date(randomMillis);
     }
 
-    public static List<Date> parseDates(String[] dateStrings, int threadCount) throws InterruptedException, ExecutionException {
+    public static List<Date> parseDates(String[] dateStrings, int threadCount, boolean useThreadLocal) throws InterruptedException, ExecutionException {
         // Define a thread pool
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         List<Future<Date>> futureList = new ArrayList<>();
@@ -47,7 +55,10 @@ public class SimpleDateFormatConcurrencyTest {
         for (String dateString : dateStrings) {
             Callable<Date> task = () -> {
                 try {
-                    return format.parse(dateString);
+                    if (useThreadLocal)
+                        return dateFormatThreadLocal.get().parse(dateString);
+                    else
+                        return format.parse(dateString);
                 } catch (Exception e) {
                     return new Date(0);
                 }
@@ -85,9 +96,17 @@ public class SimpleDateFormatConcurrencyTest {
             dates[i] = format.format(getRandomDate());
 
         for (int threads = 1; threads <= 1024; threads *= 2) {
-            List<Date> parsed = parseDates(dates, threads);
+            List<Date> parsed = parseDates(dates, threads, false);
             double percentage = checkDates(parsed, startDate(), endDate());
             System.out.println(String.format("%d threads - %.2f%% inside bounds", threads, percentage * 100.0));
+        }
+
+        System.out.println("-------------------------------------------------------------");
+
+        for (int threads = 1; threads <= 1024; threads *= 2) {
+            List<Date> parsed = parseDates(dates, threads, true);
+            double percentage = checkDates(parsed, startDate(), endDate());
+            System.out.println(String.format("threadlocal: %d threads - %.2f%% inside bounds", threads, percentage * 100.0));
         }
     }
 }
