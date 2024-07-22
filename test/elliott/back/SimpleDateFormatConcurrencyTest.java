@@ -78,15 +78,19 @@ public class SimpleDateFormatConcurrencyTest {
         return parsedDates;
     }
 
-    public static double checkDates(List<Date> dates, Date start, Date end) {
-        long startl = start.getTime();
-        long endl = end.getTime();
+    public static double checkDates(List<Date> dates, List<Date> goodDates) {
+        Date [] dateArr = new Date[dates.size()];
+        dateArr = dates.toArray(dateArr);
 
-        Object[] outofBounds = dates.stream()
-                .filter(date -> date.getTime() < startl || date.getTime() > endl)
-                .toArray();
+        Date [] goodDatesArr = new Date[goodDates.size()];
+        goodDatesArr = goodDates.toArray(goodDatesArr);
 
-        return (double) (dates.size() - outofBounds.length) / dates.size();
+        long unequal = 0;
+        for(int i = 0; i < dateArr.length; i++)
+            if(!goodDatesArr[i].equals(dateArr[i]))
+                unequal++;
+
+        return (double) (dates.size() - unequal) / dates.size();
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
@@ -95,9 +99,11 @@ public class SimpleDateFormatConcurrencyTest {
         for (int i = 0; i < count; i++)
             dates[i] = format.format(getRandomDate());
 
+        List<Date> goodDates = parseDates(dates, 16, true);
+
         for (int threads = 1; threads <= 1024; threads *= 2) {
             List<Date> parsed = parseDates(dates, threads, false);
-            double percentage = checkDates(parsed, startDate(), endDate());
+            double percentage = checkDates(parsed, goodDates);
             System.out.println(String.format("%d threads - %.2f%% inside bounds", threads, percentage * 100.0));
         }
 
@@ -105,7 +111,7 @@ public class SimpleDateFormatConcurrencyTest {
 
         for (int threads = 1; threads <= 1024; threads *= 2) {
             List<Date> parsed = parseDates(dates, threads, true);
-            double percentage = checkDates(parsed, startDate(), endDate());
+            double percentage = checkDates(parsed, goodDates);
             System.out.println(String.format("threadlocal: %d threads - %.2f%% inside bounds", threads, percentage * 100.0));
         }
     }
